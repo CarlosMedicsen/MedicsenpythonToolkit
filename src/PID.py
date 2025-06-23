@@ -111,7 +111,6 @@ class PID:
         """
         return self.integral
         
-
     def reset(self):
         """
         Reinicia el controlador PID, reseteando el error previo y la integral.
