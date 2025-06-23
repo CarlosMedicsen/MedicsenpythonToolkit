@@ -5,6 +5,9 @@ class Osciloscopio:
         self.id = id
         self.numcanales = numcanales
         self. modelo = None
+        rm = pyvisa.ResourceManager()
+        self.conexion = rm.open_resource(self.id)
+        self.Identificar()
 
 
     def connect(self):
