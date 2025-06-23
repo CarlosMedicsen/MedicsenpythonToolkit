@@ -1,12 +1,12 @@
 import pyvisa
+import numpy as np
 
 class Osciloscopio:
     def __init__(self, id: str, numcanales:int):
         self.id = id
         self.numcanales = numcanales
         self. modelo = None
-        rm = pyvisa.ResourceManager()
-        self.conexion = rm.open_resource(self.id)
+        self.connect()
         self.Identificar()
 
 
@@ -217,7 +217,27 @@ class Osciloscopio:
             return self.MedirVrms_Siglent(chan)
         else:
             return self.MedirVrms_Keysight(chan)
+
+    def MedirPotencia(self, chanV: int, chanI) -> float:
+        """
+        Mide la potencia del canal especificado en un osciloscopio Keysight.
+            Args:
+                chanV (int): Número del canal de voltaje (1 a numcanales).
+                chanI (int): Número del canal de corriente (1 a numcanales).
+            Raises:
+                ValueError: Si los números de canal no son válidos.
+            Returns:
+                float: Valor de potencia (En W) del canal especificado.
+        """
+        if chanV < 1 or chanV > self.numcanales or chanI < 1 or chanI > self.numcanales or chanV == chanI:
+            raise ValueError("Número de canal no válido")
         
+        V = self.MedirVrms(chanV)
+        I = self.MedirVrms(chanI)
+        fase = self.MedirFase(chanV, chanI)
+        resultado = V * I * np.cos(np.deg2rad(fase))
+        return float(resultado.strip())
+
     def __str__(self):
         """
         Devuelve una representación en cadena del osciloscopio.
