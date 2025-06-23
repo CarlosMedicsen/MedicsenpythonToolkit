@@ -1,0 +1,24 @@
+name: MedPyToolkit
+channels:
+  - conda-forge
+dependencies:
+  - python<=3.12
+  - pip
+  - numpy
+  - matplotlib
+  - pyserial
+  - pyvisa
+  - pytest
+  - plotly
+  - dash
+  - bokeh
+  - make
+  - git
+  - pip:      
+    - plotly-resampler
+    - sphinx==7.2.6
+    - sphinx-rtd-theme==1.3.0
+    - sphinxcontrib-autoprogram==0.1.8
+    - sphinxcontrib-napoleon==0.7
+    - gitpython
+    - tsdownsample
