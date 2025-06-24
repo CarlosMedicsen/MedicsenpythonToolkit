@@ -236,7 +236,7 @@ class Osciloscopio:
         I = self.MedirVrms(chanI)
         fase = self.MedirFase(chanV, chanI)
         resultado = V * I * np.cos(np.deg2rad(fase))
-        return float(resultado.strip())
+        return float(resultado.strip(), V, I, fase)
 
     def __str__(self):
         """
