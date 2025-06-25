@@ -19,6 +19,8 @@ class Pulser:
         self.connect()
         self.modelo = None
         self.Identificar()
+        self.amp1 = 0.25
+        self.amp2 = 0.25
         self.output1 = False
         self.output2 = False
 
@@ -74,6 +76,11 @@ class Pulser:
         
         comando = f"C{canal}:BSWV AMP,{amplitud}"
         self.conexion.write(comando)
+
+        if canal == 1:
+            self.amp1 = amplitud
+        if canal == 2:
+            self.amp2 = amplitud
 
     def set_offset(self, offset: float, canal: int = 1):
         """
@@ -243,6 +250,10 @@ class SimulacionPulser:
         """
         self.direccion = direccion
         self.nCanales = nCanales
+        self.conexion = None
+        self.modelo = "Simulacion"
+        self.amp1 = 0.25
+        self.amp2 = 0.25
 
         global vPulser1, vPulser2, output1, output2, frec1, frec2
         frec1 = 0
@@ -294,9 +305,11 @@ class SimulacionPulser:
         if canal == 1:
             global vPulser1
             vPulser1 = amplitud
+            self.amp1 = amplitud
         if canal == 2:
             global vPulser2
             vPulser2 = amplitud
+            self.amp2 = amplitud
     
     def set_offset(self, offset: float, canal: int = 1):
         """

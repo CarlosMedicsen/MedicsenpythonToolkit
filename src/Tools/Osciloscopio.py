@@ -318,7 +318,7 @@ class SimulacionOsciloscopio:
         
         if(chan == 1):
             try:
-                Vpp = vPulser1 * 12000
+                Vpp = vPulser1 * 12000 # type: ignore
             except:
                 Vpp = 0
             if(chan == 2):
@@ -390,12 +390,12 @@ class SimulacionOsciloscopio:
         
         if chan == 1:
             try:
-                Vrms = vPulser1 * 12000 *0.707
+                Vrms = vPulser1 * 12000 *0.707 # type: ignore
             except:
                 Vrms = 0
         if chan == 2:
             try:
-                Vrms = vPulser2 * 12000 *0.707
+                Vrms = vPulser2 * 12000 *0.707 # type: ignore
             except:
                 Vrms = 0
         
@@ -419,16 +419,16 @@ class SimulacionOsciloscopio:
         # Simulated values for voltage and current
         try:
             if chanV == 1:
-                V = vPulser1 * 12000
+                V = vPulser1 * 12000 # type: ignore
             if chanV == 2:
-                V = vPulser2 * 12000
+                V = vPulser2 * 12000 # type: ignore
         except:
             V = 0
         try:
             if chanI == 1:
-                I = (1 + rd.random()) / (1 + ((frec1 / (self.resonance_freq / (2 * self.q_factor))) ** 2))
+                I = (1 + rd.random()) / (1 + ((frec1 / (self.resonance_freq / (2 * self.q_factor))) ** 2)) # type: ignore
             if chanI == 2:
-                I = (1 + rd.random()) / (1 + ((frec2 / (self.resonance_freq / (2 * self.q_factor))) ** 2))
+                I = (1 + rd.random()) / (1 + ((frec2 / (self.resonance_freq / (2 * self.q_factor))) ** 2)) # type: ignore
         except:
             I = 0
         
