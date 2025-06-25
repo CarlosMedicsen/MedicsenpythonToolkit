@@ -1,11 +1,12 @@
 import pyvisa
 import numpy as np
+import random as rd
 
 class Osciloscopio:
     def __init__(self, id: str, numcanales:int):
         self.id = id
         self.numcanales = numcanales
-        self. modelo = None
+        self.modelo = None
         self.connect()
         self.Identificar()
 
@@ -266,3 +267,214 @@ class Osciloscopio:
             print("Osciloscopio eliminado y conexión cerrada.")
         except Exception as e:
             print(f"Error al cerrar la conexión: {e}")
+
+    def __repr__(self):
+            """
+            Returns a string representation of the simulated.
+                Returns:
+                    str: Information of the simulated oscilloscope.
+            """
+            return self.__str__()
+    
+
+class SimulacionOsciloscopio:
+
+    """
+    Class to simulate the Osciloscopio for testing purposes.
+    """
+    def __init__(self, id: str, numcanales:int):
+        super().__init__(id, numcanales)
+        self.id = id
+        self.numcanales
+        self.modelo = "Simulacion"
+        self.fresonancia = 35000 + rd.randint(-2500, 2500)
+    
+    def connect(self):
+        """
+        Simulates the conection to the scope.
+        """
+        pass
+
+    def Identificar(self) -> str:
+        """
+        Simulates the identification of the scope.
+            Returns:
+                str: Modelo of the simulated scope.
+        """
+        return self.modelo
+    
+    def MedirVpp(self, chan: int) -> float:
+        """
+        Simulates the Vpp measurement.
+            Args:
+                chan (int): Number of the channel (1 to numcanales).
+            Raises:
+                ValueError: If the channel number is not valid.
+            Returns:
+                float: Simulated Vpp value (in V) for the specified channel.
+        """
+        if chan < 1 or chan > self.numcanales:
+            raise ValueError("Número de canal no válido")
+        
+        if(chan == 1):
+            try:
+                Vpp = vPulser1 * 12000
+            except:
+                Vpp = 0
+            if(chan == 2):
+                try:
+                    Vpp = vPulser2 * 12000
+                except:
+                    Vpp = 0
+        return Vpp
+    MedirVpp_Siglent = MedirVpp_Keysight = MedirVpp
+
+    def MedirFase(self, chan1: int, chan2: int) -> float:
+        """
+        Simulates the phase measurement between two channels.
+            Args:
+                chan1 (int): Number of the first channel (1 to numcanales).
+                chan2 (int): Number of the second channel (1 to numcanales).
+            Raises:
+                ValueError: If the channel numbers are not valid.
+            Returns:
+                float: Simulated phase value (in degrees) between the two specified channels.
+        """
+        if chan1 < 1 or chan1 > self.numcanales or chan2 < 1 or chan2 > self.numcanales or chan1 == chan2:
+            raise ValueError("Número de canal no válido")
+        
+        fase = rd.uniform(-10, 10)
+        return fase
+    MedirFase_Siglent = MedirFase_Keysight = MedirFase
+
+    def MedirFrecuencia(self, chan: int) -> float:
+        """
+        Simulates the frequency measurement of a specified channel.
+            Args:
+                chan (int): Number of the channel (1 to numcanales).
+            Raises:
+                ValueError: If the channel number is not valid.
+            Returns:
+                float: Simulated frequency value (in Hz) for the specified channel.
+        """
+        if chan < 1 or chan > self.numcanales:
+            raise ValueError("Número de canal no válido")
+        
+        if chan == 1:
+            try:
+                f = frec1
+            except:
+                frec1 = 0
+        if chan == 2:
+            try:
+                f = frec2
+            except:
+                frec2 = 0
+        
+        # Simulated frequency based on resonance frequency
+        return f
+    MedirFrecuencia_Siglent = MedirFrecuencia_Keysight = MedirFrecuencia
+
+    def MedirVrms(self, chan: int) -> float:
+        """
+        Simulates the Vrms measurement of a specified channel.
+            Args:
+                chan (int): Number of the channel (1 to numcanales).
+            Raises:
+                ValueError: If the channel number is not valid.
+            Returns:
+                float: Simulated Vrms value (in V) for the specified channel.
+        """
+        if chan < 1 or chan > self.numcanales:
+            raise ValueError("Número de canal no válido")
+        
+        if chan == 1:
+            try:
+                Vrms = vPulser1 * 12000 *0.707
+            except:
+                Vrms = 0
+        if chan == 2:
+            try:
+                Vrms = vPulser2 * 12000 *0.707
+            except:
+                Vrms = 0
+        
+        return Vrms
+    MedirVrms_Siglent = MedirVrms_Keysight = MedirVrms
+    
+    def MedirPotenciaCompleta(self, chanV: int, chanI: int) -> float:
+        """
+        Simulates the power measurement.
+            Args:
+                chanV (int): Number of the voltage channel (1 to numcanales).
+                chanI (int): Number of the current channel (1 to numcanales).
+            Raises:
+                ValueError: If the channel numbers are not valid.
+            Returns:
+                float: Simulated power value (in W) for the specified channel.
+        """
+        if chanV < 1 or chanV > self.numcanales or chanI < 1 or chanI > self.numcanales or chanV == chanI:
+            raise ValueError("Número de canal no válido")
+        
+        # Simulated values for voltage and current
+        try:
+            if chanV == 1:
+                V = vPulser1 * 12000
+            if chanV == 2:
+                V = vPulser2 * 12000
+        except:
+            V = 0
+        try:
+            if chanI == 1:
+                I = (1 + rd.random()) / (1 + ((frec1 / (self.resonance_freq / (2 * self.q_factor))) ** 2))
+            if chanI == 2:
+                I = (1 + rd.random()) / (1 + ((frec2 / (self.resonance_freq / (2 * self.q_factor))) ** 2))
+        except:
+            I = 0
+        
+        fase = rd.uniform(-10, 10)
+        P = V * I * np.cos(np.deg2rad(fase))
+        return P, V, I, fase
+    
+    def MedirPotencia(self, chanV: int, chanI: int) -> float:
+        """
+        Simulates the power measurement.
+            Args:
+                chanV (int): Number of the voltage channel (1 to numcanales).
+                chanI (int): Number of the current channel (1 to numcanales).
+            Raises:
+                ValueError: If the channel numbers are not valid.
+            Returns:
+                float: Simulated power value (in W) for the specified channel.
+        """
+        tuple = self.MedirPotenciaCompleta(chanV, chanI)
+        return tuple[0]
+    
+    def __str__(self):
+        """
+        Returns a string representation of the simulated oscilloscope.
+            Returns:
+                str: Information of the simulated oscilloscope.
+        """
+        return f"Simulacion Osciloscopio ID: {self.id}\nModelo: {self.modelo}\nCanales: {self.numcanales}\nFrec. Resonancia: {self.fresonancia} Hz\n"
+    
+    def close(self):
+        """
+        Simulates closing the connection to the oscilloscope.
+        """
+        pass
+
+    def __del__(self):
+        """
+        Destructor to ensure the connection is closed when the instance is deleted.
+        """
+        pass
+
+    def __repr__(self):
+        """
+        Returns a string representation of the simulated oscilloscope.
+            Returns:
+                str: Information of the simulated oscilloscope.
+        """
+        return self.__str__()
+    
