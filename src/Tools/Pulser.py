@@ -276,6 +276,7 @@ class SimulacionPulser:
             Args:
                 frecuencia (float): Frequency in Hz.
         """
+        global frec1, frec2
         if canal == 1:
             global frec1
             frec1 = frecuencia
@@ -289,6 +290,7 @@ class SimulacionPulser:
             Args:
                 amplitud (float): Amplitude in V.
         """
+        global vPulser1, vPulser2
         if canal == 1:
             global vPulser1
             vPulser1 = amplitud
@@ -341,11 +343,14 @@ class SimulacionPulser:
             Returns:
                 float: Frequency in Hz.
         """
-        if canal == 1:
-            return frec1
-        if canal == 2:
-            return frec2
-        
+        try:
+            if canal == 1:
+                return frec1
+            if canal == 2:
+                return frec2
+        except:
+            return 0.0
+            
     def get_amplitud(self, canal: int = 1) -> float:
         """
         Gets the amplitude of the pulse generator.
@@ -354,10 +359,13 @@ class SimulacionPulser:
             Returns:
                 float: Amplitude in V.
         """
-        if canal == 1:
-            return vPulser1
-        if canal == 2:
-            return vPulser2
+        try:
+            if canal == 1:
+                return vPulser1
+            if canal == 2:
+                return vPulser2
+        except:
+            return 0.0
     
     def get_offset(self, canal: int = 1) -> float:
         """
