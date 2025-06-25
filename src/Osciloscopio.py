@@ -9,11 +9,9 @@ class Osciloscopio:
         self.connect()
         self.Identificar()
 
-
     def connect(self):
         rm = pyvisa.ResourceManager()
         self.conexion = rm.open_resource(self.id)
-        return self.inst
     
     def Identificar(self) -> str:
         """
@@ -26,9 +24,9 @@ class Osciloscopio:
         
         try:
             idn = self.conexion.query("*IDN?")
-            if "Siglent" in idn:
+            if "siglent" in idn.lower():
                 self.modelo = "Siglent"
-            if "Keysight" in idn:
+            if "keysight" in idn.lower():
                 self.modelo = "Keysight"
             if not self.modelo:
                 self.modelo = "Desconocido"
@@ -51,7 +49,7 @@ class Osciloscopio:
         """
         if chan < 1 or chan > self.numcanales:
             raise ValueError("Número de canal no válido")
-        comando = f"MEASURE:VPP? CH{chan}"
+        comando = f"MEASURE:VPP? CHAN{chan}"
         resultado = self.conexion.query(comando)
         return float(resultado.strip())
 
@@ -74,21 +72,6 @@ class Osciloscopio:
         resultado = float(valor_str.strip("()V \n\r\t"))
         return float(resultado.strip())
     
-    def MedirVpp(self, chan: int) -> float:
-        """
-        Mide el valor de Vpp del canal especificado en un osciloscopio.
-            Args:
-                chan (int): Número del canal (1 a numcanales).
-            Raises:
-                ValueError: Si el número de canal no es válido.
-            Returns:
-                float: Valor de Vpp (En V) del canal especificado.
-        """
-        if self.modelo == "Siglent":
-            return self.MedirVpp_Siglent(chan)
-        else:
-            return self.MedirVpp_Keysight(chan)
-
     def MedirFase_Keysight(self, chan1: int, chan2: int) -> float:
         """
         Mide la fase entre dos canales especificados en un osciloscopio.
@@ -103,7 +86,7 @@ class Osciloscopio:
         if chan1 < 1 or chan1 > self.numcanales or chan2 < 1 or chan2 > self.numcanales:
             raise ValueError("Número de canal no válido")
         
-        comando = f"MEASURE:PHASE? CH{chan1},CH{chan2}"
+        comando = f"MEASURE:PHASE? CHAN{chan1},CHAN{chan2}"
         resultado = self.conexion.query(comando)
         return float(resultado.strip())
     
@@ -163,7 +146,7 @@ class Osciloscopio:
         if chan < 1 or chan > self.numcanales:
             raise ValueError("Número de canal no válido")
         
-        comando = f"MEASURE:FREQUENCY? CH{chan}"
+        comando = f"MEASURE:FREQUENCY? CHAN{chan}"
         resultado = self.conexion.query(comando)
         return float(resultado.strip())
     
@@ -180,7 +163,7 @@ class Osciloscopio:
         if chan < 1 or chan > self.numcanales:
             raise ValueError("Número de canal no válido")
         
-        comando = f"MEASURE:VRMS? CH{chan}"
+        comando = f"MEASURE:VRMS? CHAN{chan}"
         resultado = self.conexion.query(comando)
         return float(resultado.strip())
     
@@ -218,7 +201,7 @@ class Osciloscopio:
         else:
             return self.MedirVrms_Keysight(chan)
 
-    def MedirPotencia(self, chanV: int, chanI) -> float:
+    def MedirPotenciaCompleta(self, chanV: int, chanI: int) -> tuple:
         """
         Mide la potencia del canal especificado en un osciloscopio Keysight.
             Args:
@@ -227,7 +210,7 @@ class Osciloscopio:
             Raises:
                 ValueError: Si los números de canal no son válidos.
             Returns:
-                float: Valor de potencia (En W) del canal especificado.
+                tuple: Tupla con el valor de potencia (En W), voltaje (En V), corriente (En A) y fase (En grados) del canal especificado.
         """
         if chanV < 1 or chanV > self.numcanales or chanI < 1 or chanI > self.numcanales or chanV == chanI:
             raise ValueError("Número de canal no válido")
@@ -235,8 +218,22 @@ class Osciloscopio:
         V = self.MedirVrms(chanV)
         I = self.MedirVrms(chanI)
         fase = self.MedirFase(chanV, chanI)
-        resultado = V * I * np.cos(np.deg2rad(fase))
-        return float(resultado.strip(), V, I, fase)
+        P = V * I * np.cos(np.deg2rad(fase))
+        return P, V, I, fase
+    
+    def MedirPotencia(self, chanV: int, chanI: int) -> float:
+        """
+        Mide la potencia del canal especificado en un osciloscopio.
+            Args:
+                chanV (int): Número del canal de voltaje (1 a numcanales).
+                chanI (int): Número del canal de corriente (1 a numcanales).
+            Raises:
+                ValueError: Si los números de canal no son válidos.
+            Returns:
+                float: Valor de potencia (En W) del canal especificado.            
+        """
+        tuple = self.MedirPotenciaCompleta(chanV, chanI)
+        return tuple[0]  # Retorna solo la potencia
 
     def __str__(self):
         """
@@ -266,5 +263,6 @@ class Osciloscopio:
         """
         try:
             self.close()
+            print("Osciloscopio eliminado y conexión cerrada.")
         except Exception as e:
             print(f"Error al cerrar la conexión: {e}")

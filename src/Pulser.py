@@ -19,6 +19,8 @@ class Pulser:
         self.connect()
         self.modelo = None
         self.Identificar()
+        self.output1 = False
+        self.output2 = False
 
     def Identificar(self) -> str:
         """
@@ -28,13 +30,13 @@ class Pulser:
         """
         try:
             idn = self.conexion.query("*IDN?")
-            if "Keysight" in idn:
+            if "keysight" in idn.lower():
                 self.modelo = "Keysight"
-            if "Siglent" in idn:
+            if "siglent" in idn.lower():
                 self.modelo = "Siglent"
-            if "Tektronix" in idn:
+            if "tektronix" in idn.lower():
                 self.modelo = "Tektronix"
-            if "RS" in idn:
+            if "rs" in idn.lower():
                 self.modelo = "RS"
             else:
                 self.modelo = "Desconocido"
@@ -90,6 +92,10 @@ class Pulser:
         """
         comando = f"C{canal}:OUTP ON"
         self.conexion.write(comando)
+        self.output1 = True if canal == 1 else self.output1
+        self.output2 = True if canal == 2 else self.output2
+
+    output_on = enable_output
         
     def disable_output(self, canal: int = 1):
         """
@@ -99,6 +105,8 @@ class Pulser:
         """
         comando = f"C{canal}:OUTP OFF"
         self.conexion.write(comando)
+
+    output_off = disable_output
 
     def output_impedance(self, impedancia: float, canal: int = 1):
         """
@@ -162,11 +170,33 @@ class Pulser:
         Cierra la conexión con el generador de pulsos.
         """
         if self.conexion:
+
             self.conexion.close()
             self.conexion = None
-            print("Conexión cerrada.")
         else:
             print("No hay conexión abierta para cerrar.")
+
+    def __enter__(self):
+        """
+        Método para usar el generador de pulsos como un contexto.
+            Returns:
+                Pulser: Instancia del generador de pulsos.
+        """
+        return self
+    
+    def __exit__(self, exc_type, exc_value, traceback):
+        """
+        Método para cerrar la conexión al salir del contexto.
+            Args:
+                exc_type: Tipo de excepción.
+                exc_value: Valor de la excepción.
+                traceback: Traza de la excepción.
+        """
+        if self.output1:
+            self.disable_output(1)
+        if self.output2:
+            self.disable_output(2)
+        self.close()
 
     def __str__(self):
         """
@@ -184,5 +214,15 @@ class Pulser:
         """
         Destructor para cerrar la conexión al eliminar el objeto.
         """
-        self.close()
-        print("Generador de pulsos eliminado y conexión cerrada.")
+        try:
+            if hasattr(self, 'conexion') and self.conexion is not None:
+                if self.output1:
+                    self.disable_output(1)
+                if self.output2:
+                    self.disable_output(2)
+
+            self.close()
+            print("Generador de pulsos eliminado y conexión cerrada.")
+        except Exception as e:
+            pass
+        
