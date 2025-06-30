@@ -91,7 +91,7 @@ class Pulser:
         comando = f"C{canal}:BSWV OFS,OFS{offset}"
         self.conexion.write(comando)
     
-    def enable_output(self, canal: int = 1):
+    def enable_output(self, canal: int = 1, flag: bool = True):
         """
         Habilita la salida del generador de pulsos.
             Args:
@@ -101,9 +101,12 @@ class Pulser:
         self.conexion.write(comando)
         self.output1 = True if canal == 1 else self.output1
         self.output2 = True if canal == 2 else self.output2
+        if flag:
+            print(f"Pulser, channel {canal}, ON")
+
     output_on = enable_output
         
-    def disable_output(self, canal: int = 1):
+    def disable_output(self, canal: int = 1, flag = True):
         """
         Deshabilita la salida del generador de pulsos.
             Args:
@@ -111,6 +114,8 @@ class Pulser:
         """
         comando = f"C{canal}:OUTP OFF"
         self.conexion.write(comando)
+        if flag:
+            print(f"Pulser, channel {canal}, OFF")
     output_off = disable_output
 
     def output_impedance(self, impedancia: float, canal: int = 1):

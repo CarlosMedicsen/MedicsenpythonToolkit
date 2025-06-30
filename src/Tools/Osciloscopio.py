@@ -1,6 +1,7 @@
 import pyvisa
 import numpy as np
 import random as rd
+import time
 
 class Osciloscopio:
     def __init__(self, id: str, numcanales:int):
@@ -102,17 +103,20 @@ class Osciloscopio:
             Returns:
                 float: Valor de fase (En grados) entre los dos canales especificados.
         """
+        mok = 0
+        i = 0
         if chan1 < 1 or chan1 > self.numcanales or chan2 < 1 or chan2 > self.numcanales:
             raise ValueError("Número de canal no válido")
         while(mok == 0):
             comando = f"C{chan1}-C{chan2}:MEAD? PHA"
             val = self.conexion.query(comando)
             _, valor_str = val.split(",")
-            resultado = float(valor_str.strip("()degree \n\r\t"))
-            if resultado == '****' or i < 10:
+            resultado = valor_str.strip("()degree \n\r\t")
+            if resultado == '****':
                 i += 1
+                time.sleep(0.1)
             else:
-                if i >= 10:
+                if i >= 20:
                     raise RuntimeError("Error al medir la fase, verifique las conexiones.")
                 else:
                     mok = 1 #solo paro cuando la fase se mide bien.
@@ -185,7 +189,7 @@ class Osciloscopio:
         val = self.conexion.query(comando)
         _, valor_str = val.split(",")
         resultado = float(valor_str.strip("()V \n\r\t"))
-        return float(resultado.strip())
+        return resultado
 
     def MedirVrms(self, chan: int) -> float:
         """
@@ -219,7 +223,7 @@ class Osciloscopio:
         V = self.MedirVrms(chanV)
         I = self.MedirVrms(chanI)
         fase = self.MedirFase(chanV, chanI)
-        P = V * I * np.cos(np.deg2rad(fase))
+        P = V * I/0.2 * np.cos(np.deg2rad(fase))
         return P, V, I, fase
     
     def MedirPotencia(self, chanV: int, chanI: int) -> float:
