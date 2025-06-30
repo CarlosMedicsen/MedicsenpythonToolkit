@@ -1,12 +1,17 @@
 import pyvisa
+import os
 import numpy as np
 import random as rd
+import json
 import time
 
 class Osciloscopio:
-    def __init__(self, id: str, numcanales:int):
-        self.id = id
-        self.numcanales = numcanales
+    def __init__(self, id: str = "", numcanales:int = 0):
+        if id == "":
+            self.AutoConnect()
+        else:
+            self.id = id
+            self.numcanales = numcanales
         self.modelo = None
         self.connect()
         self.Identificar()
@@ -15,6 +20,29 @@ class Osciloscopio:
         rm = pyvisa.ResourceManager()
         self.conexion = rm.open_resource(self.id)
     
+    def AutoConnect(self) -> bool:
+        """
+        Auto Connect protocol for the known Osciloscope.
+        Looks for connected Osciloscopes In the Equipement json
+        Connects to them and auto Configures.
+        Raises:
+            LookupError: if no known device is connected.
+        """
+        connectedDevices = pyvisa.ResourceManager().list_resources()
+        
+        ruta_json = os.path.join(os.path.dirname(__file__), "Equipment.json")
+        with open(ruta_json, 'r') as f:
+            knownDevices = json.load(f)
+
+        for id in connectedDevices:
+            for nombre, datos in knownDevices.get("osciloscopios", {}).items():
+                if id in datos.get("aliases", []):
+                    self.id = id
+                    self.numcanales = datos.get("numCanales")
+                    print(f"Se ha conectado el osci: {nombre} automáticamente.")
+                    return
+        raise LookupError(f"No known Osciloscope conected, please connect a known osciloscope")
+
     def Identificar(self) -> str:
         """
         Identifica el modelo del osciloscopio conectado.
