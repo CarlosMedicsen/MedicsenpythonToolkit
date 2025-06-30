@@ -1,4 +1,6 @@
 import pyvisa
+import os
+import json
 
 class Pulser:
     """
@@ -8,14 +10,17 @@ class Pulser:
             modelo (str): Modelo del generador de pulsos.
     """
     
-    def __init__(self, direccion: str, nCanales: int):
+    def __init__(self, direccion: str = "", nCanales: int = 0):
         """
         Inicializa la conexión con el generador de pulsos.
             Args:
                 direccion (str): Dirección VISA del generador de pulsos.
         """
-        self.direccion = direccion
-        self.nCanales = nCanales
+        if direccion == "":
+            self.AutoConnect()
+        else:
+            self.direccion = direccion
+            self.nCanales = nCanales
         self.connect()
         self.modelo = None
         self.Identificar()
@@ -23,6 +28,30 @@ class Pulser:
         self.amp2 = 0.25
         self.output1 = False
         self.output2 = False
+
+    def AutoConnect(self) -> bool:
+        """
+        Auto Connect protocol for the known Pulsers.
+        Looks for connected Pulsers In the Equipement json
+        Connects to them and auto Configures.
+        Raises:
+            LookupError: if no known device is connected.
+        """
+        connectedDevices = pyvisa.ResourceManager().list_resources()
+        
+        ruta_json = os.path.join(os.path.dirname(__file__), "Equipment.json")
+        with open(ruta_json, 'r') as f:
+            knownDevices = json.load(f)
+
+        for id in connectedDevices:
+            for nombre, datos in knownDevices.get("generadores_de_pulsos", {}).items():
+                if id in datos.get("aliases", []):
+                    self.direccion = id
+                    self.nCanales = datos.get("numCanales")
+                    print(f"Se ha conectado el Pulser: {nombre} automáticamente.")
+                    self.PulserPoliceman(nombre)
+                    return
+        raise LookupError(f"No known Pulser conected, please connect a known Pulser")
 
     def Identificar(self) -> str:
         """
@@ -103,7 +132,6 @@ class Pulser:
         self.output2 = True if canal == 2 else self.output2
         if flag:
             print(f"Pulser, channel {canal}, ON")
-
     output_on = enable_output
         
     def disable_output(self, canal: int = 1, flag = True):
@@ -235,7 +263,19 @@ class Pulser:
             print("Generador de pulsos eliminado y conexión cerrada.")
         except Exception as e:
             pass
-        
+    
+    def PulserPoliceman(self, name):
+        """
+        Checks for known broken or malfunctioning equipement and makes sure user is aware of posible consecuences:
+        """
+        if name == "PulserSiglentDuda":
+            print("\033[1;91mAtención!! Policia del laboratorio:\033[0m")
+            print("\033[1;91mEstas Usando un pulser sospechoso, en el pasado este pulser ha estropeado otros equipos \033, ¿estas seguro de que quieres correr ese riesgo?\033[0m [y/n]")
+            if input().strip() == "y":
+                print("\033[1;91mEspero que sepas lo que estas haciendo... Buena suerte y ánimo!\033[0m")
+                return
+            print("\033[1;91mYa me parecia a mi... Sabia decisión.\033[0m")
+            raise ValueError("\033[1;91mMejor no usar equipos sospechosos...\033[0m")
 
 class SimulacionPulser:
     """
