@@ -1,0 +1,41 @@
+{
+  "osciloscopios": {
+    "OsciloscopioSiglent":{
+        "aliases": [
+      "USB0::0xF4EC::0xEE3A::SDS1MKGX802538::INSTR"
+    ],
+    "numCanales": 2,
+    "Comandos": "Siglent"
+    },
+    
+    "OsciloscopioKeysight": {
+        "aliases": [
+      "USB0::0x2A8D::0x0386::CN63326485::INSTR"
+    ],
+    "numCanales": 4,
+    "Comandos": "Keysight"
+    }
+  },
+  "generadores_de_pulsos": {
+    "PulserRSPro":{
+        "aliases": [
+            "USB0::0xF4EC::0xEE38::SDG1XDDC801175::INSTR"
+        ],
+        "numCanales": 2
+    },
+
+    "PulserSiglentNegro":{
+        "aliases": [
+            "USB0::0xF4EC::0x1103::SDG1PA0C900147::INSTR"
+        ],
+        "numCanales": 2
+    },
+
+    "PulserSiglentDuda":{
+        "aliases": [
+            "USB0::0xF4EC::0x1103::SDG1XCBD4R4335::INSTR"
+        ],
+        "numCanales": 2
+    }
+  }
+}
