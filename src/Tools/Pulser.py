@@ -71,7 +71,7 @@ class Pulser:
             Args:
                 amplitud (float): Amplitud en V.
         """
-        if amplitud > 0.8:
+        if amplitud > 0.5:
             raise ValueError("La amplitud no puede ser mayor a 0.8 V.")
         
         comando = f"C{canal}:BSWV AMP,{amplitud}"
