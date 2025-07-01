@@ -100,8 +100,22 @@ class Osciloscopio:
         val = self.conexion.query(comando)
         _, valor_str = val.split(",")
         resultado = float(valor_str.strip("()V \n\r\t"))
-        return float(resultado.strip())
+        return resultado
     
+    def MedirVpp(self, chan:int) -> float:
+        """
+        Measures Vpp of the specified channel in any osciloscope.
+            Args: 
+                chan (int): Measure channel.
+            Returns:
+                float: Measured value in Volts.
+        """
+        if self.modelo == "KeyKeysight":
+            Vpp = self.MedirVpp_Keysight(chan)
+        else:
+            Vpp = self.MedirVpp_Siglent(chan)
+        return Vpp
+
     def MedirFase_Keysight(self, chan1: int, chan2: int) -> float:
         """
         Mide la fase entre dos canales especificados en un osciloscopio.
@@ -249,9 +263,9 @@ class Osciloscopio:
             raise ValueError("Número de canal no válido")
         
         V = self.MedirVrms(chanV)
-        I = self.MedirVrms(chanI)
+        I = self.MedirVrms(chanI)/0.2 #200 mV/A
         fase = self.MedirFase(chanV, chanI)
-        P = V * I/0.2 * np.cos(np.deg2rad(fase))
+        P = V * I * np.abs(np.cos(np.radians(fase)))
         return P, V, I, fase
     
     def MedirPotencia(self, chanV: int, chanI: int) -> float:
@@ -267,6 +281,17 @@ class Osciloscopio:
         """
         tuple = self.MedirPotenciaCompleta(chanV, chanI)
         return tuple[0]  # Retorna solo la potencia
+
+    def MedirPotenciaMedicsenCompleta(self, chanV: int = 1, chanI: int =2) -> tuple:
+        Vpp = self.MedirVpp(chanV)
+        Ipp = self.MedirVpp(chanI)/0.2 #200 mV/A
+        fase = self.MedirFase(chanV, chanI)
+        P = Vpp*Ipp*np.abs(np.cos(np.radians(fase)))/8
+        return [P, Vpp, Ipp, fase]
+    
+    def MedirPotenciaMedicsen(self, chanV: int = 1, chanI: int =2) -> float:
+        d = self.MedirPotenciaMedicsenCompleta(chanV, chanI)
+        return d[0]
 
     def __str__(self):
         """
