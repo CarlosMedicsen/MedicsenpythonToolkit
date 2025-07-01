@@ -67,7 +67,7 @@ class Osciloscopio:
 
         return self.conexion.query("*IDN?").strip()
 
-    def MedirVpp_Keysight(self, chan: int) -> float:
+    def _MedirVpp_Keysight(self, chan: int) -> float:
         """
         Mide el valor de Vpp del canal especificado en un osciloscopio Keysight.
             Args:
@@ -83,7 +83,7 @@ class Osciloscopio:
         resultado = self.conexion.query(comando)
         return float(resultado.strip())
 
-    def MedirVpp_Siglent(self, chan: int) -> float:
+    def _MedirVpp_Siglent(self, chan: int) -> float:
         """
         Mide el valor de Vpp del canal especificado en un osciloscopio Sylgent.
             Args:
@@ -111,12 +111,12 @@ class Osciloscopio:
                 float: Measured value in Volts.
         """
         if self.modelo == "KeyKeysight":
-            Vpp = self.MedirVpp_Keysight(chan)
+            Vpp = self._MedirVpp_Keysight(chan)
         else:
-            Vpp = self.MedirVpp_Siglent(chan)
+            Vpp = self._MedirVpp_Siglent(chan)
         return Vpp
 
-    def MedirFase_Keysight(self, chan1: int, chan2: int) -> float:
+    def _MedirFase_Keysight(self, chan1: int, chan2: int) -> float:
         """
         Mide la fase entre dos canales especificados en un osciloscopio.
             Args:
@@ -134,7 +134,7 @@ class Osciloscopio:
         resultado = self.conexion.query(comando)
         return float(resultado.strip())
     
-    def MedirFase_Siglent(self, chan1: int, chan2: int) -> float:
+    def _MedirFase_Siglent(self, chan1: int, chan2: int) -> float:
         """
         Mide la fase entre dos canales especificados en un osciloscopio Sylgent.
             Args:
@@ -176,11 +176,11 @@ class Osciloscopio:
                 float: Valor de fase (En grados) entre los dos canales especificados.
         """
         if self.modelo == "Siglent":
-            return self.MedirFase_Siglent(chan1, chan2)
+            return self._MedirFase_Siglent(chan1, chan2)
         else:
-            return self.MedirFase_Keysight(chan1, chan2)
+            return self._MedirFase_Keysight(chan1, chan2)
         
-    def MedirFrecuencia_Keysight(self, chan: int) -> float:
+    def _MedirFrecuencia_Keysight(self, chan: int) -> float:
         """
         Mide la frecuencia del canal especificado en un osciloscopio.
             Args:
@@ -197,7 +197,7 @@ class Osciloscopio:
         resultado = self.conexion.query(comando)
         return float(resultado.strip())
     
-    def MedirVrms_Keysight(self, chan: int) -> float:
+    def _MedirVrms_Keysight(self, chan: int) -> float:
         """
         Mide el valor de Vrms del canal especificado en un osciloscopio Keysight.
             Args:
@@ -214,7 +214,7 @@ class Osciloscopio:
         resultado = self.conexion.query(comando)
         return float(resultado.strip())
     
-    def MedirVrms_Siglent(self, chan: int) -> float:
+    def _MedirVrms_Siglent(self, chan: int) -> float:
         """
         Mide el valor de Vrms del canal especificado en un osciloscopio Sylgent.
             Args:
@@ -233,7 +233,7 @@ class Osciloscopio:
         resultado = float(valor_str.strip("()V \n\r\t"))
         return resultado
 
-    def MedirVrms(self, chan: int) -> float:
+    def _MedirVrms(self, chan: int) -> float:
         """
         Mide el valor de Vrms del canal especificado en un osciloscopio.
             Args:
@@ -250,7 +250,8 @@ class Osciloscopio:
 
     def MedirPotenciaCompleta(self, chanV: int, chanI: int) -> tuple:
         """
-        Mide la potencia del canal especificado en un osciloscopio Keysight.
+        Mide la potencia de los canales especificados en cualquier osciloscopio.
+        Toma directamente el valor RMS.
             Args:
                 chanV (int): Número del canal de voltaje (1 a numcanales).
                 chanI (int): Número del canal de corriente (1 a numcanales).
@@ -262,8 +263,8 @@ class Osciloscopio:
         if chanV < 1 or chanV > self.numcanales or chanI < 1 or chanI > self.numcanales or chanV == chanI:
             raise ValueError("Número de canal no válido")
         
-        V = self.MedirVrms(chanV)
-        I = self.MedirVrms(chanI)/0.2 #200 mV/A
+        V = self._MedirVrms(chanV)
+        I = self._MedirVrms(chanI)/0.2 #200 mV/A
         fase = self.MedirFase(chanV, chanI)
         P = V * I * np.abs(np.cos(np.radians(fase)))
         return P, V, I, fase
