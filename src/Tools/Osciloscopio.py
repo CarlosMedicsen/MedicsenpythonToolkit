@@ -110,7 +110,7 @@ class Osciloscopio:
             Returns:
                 float: Measured value in Volts.
         """
-        if self.modelo == "KeyKeysight":
+        if self.modelo == "Keysight":
             Vpp = self._MedirVpp_Keysight(chan)
         else:
             Vpp = self._MedirVpp_Siglent(chan)
