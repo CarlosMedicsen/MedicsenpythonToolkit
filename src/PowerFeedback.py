@@ -3,6 +3,7 @@ from matplotlib import pyplot as plt
 import pandas as pd
 from Tools.Osciloscopio import Osciloscopio
 from Tools.Pulser import Pulser
+from Tools.Decorators import cronometer
 from Tools.PID import PID
 import threading
 import queue
@@ -43,10 +44,10 @@ def PWfdbk():
 
 def SimpleFeedback() -> None:
     # Configuración del osciloscopio
-    osci = Osciloscopio("USB0::0xF4EC::0xEE3A::SDS1MKGX802538::INSTR", 2)
+    osci = Osciloscopio()
 
     # Configuración del generador de pulsos
-    pulser = Pulser("USB0::0xF4EC::0x1103::SDG1PA0C900147::INSTR", 2)
+    pulser = Pulser()
     frecuencia = 38000
     pulser.set_frecuencia(frecuencia)  # Frecuencia en Hz
     pulser.set_amplitud(0.25)  # Amplitud inicial en V
@@ -77,7 +78,8 @@ def SimpleFeedback() -> None:
                 pulser.set_amplitud(pulser.amp1 + output)
             except ValueError:
                 pulser.set_amplitud(0.6)
-            P = osci.MedirPotencia(1, 2)
+            #P = osci.MedirPotencia(1, 2)
+            P = osci.MedirPotenciaMedicsen()
             t = time.time()
             dt = t - t0
             output = pid.update(P, dt=dt)
@@ -113,26 +115,62 @@ def stepResponse(osci: Osciloscopio, pulser: Pulser, pid: PID) -> None:
         Returns:
             Vector de tiempos y valores medidos.
     """
-   
-    # Configuración del generador de pulsos
-    pulser.set_amplitud(0.25)  # Amplitud inicial en V
-    pulser.set_frecuencia(38000)  # Frecuencia en Hz
-    pulser.output_off()
+    from frecResonancia import frecResonancia
 
+    fr = frecResonancia(osci, pulser)
+    #fr = 36819
+    # Configuración del generador de pulsos
+    pulser.set_amplitud(0.05)  # Amplitud inicial en V
+    pulser.set_frecuencia(fr)  # Frecuencia en Hz
+    pulser.enable_output()
     # Medición inicial
     P_inicial = osci.MedirPotencia(1,2)
-
     print(f"Valor inicial medido: {P_inicial} W")
 
-    # Simulación de control
-    for t in np.arange(0, 10, 0.1):  # Simulación por 10 segundos
-        measured_value = osci.Medirpp(2)
-        output = pid.update(measured_value, dt=0.1)
-        pulser.set_amplitud(output)
+    t0 = time.time()
+    t = 0
+    i = 0
+    Parr = []
+    tarr = []
+    tmarr = []
+    st = False
+    while t < 15: 
+        p, tm = cronometer(osci.MedirPotenciaMedicsen)(1,2)
+        t = time.time() - t0
 
-        print(f"Tiempo: {t:.1f}s, Medido: {measured_value:.2f} V, Salida PID: {output:.2f} V")
-    
-    # Graficar resultados
+        if t > 7 and st == False:
+            pulser.set_amplitud(0.25) 
+            st = True
+        i += 1
+        print(f"Tiempo: {t:.1f} iter = {i}, P = {p}")
+        Parr.append(p)
+        tarr.append(t)
+        tmarr.append(tm)
+    pulser.disable_output()
+    pps = i/tarr[i-1]
+    print(f"Measurements made at {pps} points per second")
+    print(f"avr loop time {np.mean(tarr)}")
+    avrT = np.mean(tmarr)
+    print(f"avr measure time {avrT}")
+    print(f"Sampling rate = {1/avrT} Hz")
+
+    plt.plot(tarr,Parr, 'o', markersize=2)
+    plt.show()
+        
+
+def UnmeasuredStep(frec):
+    """
+    Performs a power step from no output to 0.25V
+        Args:
+            frec(float): Resonant frec of tranducer.
+    """
+    with Pulser() as pulse:
+        pulse.set_frecuencia(frec)
+        pulse.set_amplitud(0.25)
+        time.sleep(5)
+        pulse.output_on()
+        time.sleep(5)
+
 
 def bucleMedicion(osci: Osciloscopio, potencia_queue: queue.Queue, tiempoSampleo: float = 0.02) -> None:
     """
@@ -147,5 +185,9 @@ def bucleMedicion(osci: Osciloscopio, potencia_queue: queue.Queue, tiempoSampleo
         time.sleep(tiempoSampleo)  # Espera [segundos] entre mediciones
 
 if __name__ == "__main__":
-    SimpleFeedback()
+    osci = Osciloscopio()
+    pid = PID(0, 0, 0)
+    with Pulser() as pulser:
+        stepResponse(osci, pulser, pid)
+
     

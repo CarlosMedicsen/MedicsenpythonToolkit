@@ -156,9 +156,9 @@ class Osciloscopio:
             resultado = valor_str.strip("()degree \n\r\t")
             if resultado == '****':
                 i += 1
-                time.sleep(0.01)
+                time.sleep(0.06)
             else:
-                if i >= 10:
+                if i >= 300:
                     raise RuntimeError("Error al medir la fase, verifique las conexiones.")
                 else:
                     mok = 1 #solo paro cuando la fase se mide bien.
