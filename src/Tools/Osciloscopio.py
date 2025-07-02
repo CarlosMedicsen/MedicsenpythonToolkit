@@ -156,9 +156,9 @@ class Osciloscopio:
             resultado = valor_str.strip("()degree \n\r\t")
             if resultado == '****':
                 i += 1
-                time.sleep(0.1)
+                time.sleep(0.01)
             else:
-                if i >= 20:
+                if i >= 10:
                     raise RuntimeError("Error al medir la fase, verifique las conexiones.")
                 else:
                     mok = 1 #solo paro cuando la fase se mide bien.
@@ -233,7 +233,7 @@ class Osciloscopio:
         resultado = float(valor_str.strip("()V \n\r\t"))
         return resultado
 
-    def _MedirVrms(self, chan: int) -> float:
+    def MedirVrms(self, chan: int) -> float:
         """
         Mide el valor de Vrms del canal especificado en un osciloscopio.
             Args:
@@ -244,9 +244,9 @@ class Osciloscopio:
                 float: Valor de Vrms (En V) del canal especificado.
         """
         if self.modelo == "Siglent":
-            return self.MedirVrms_Siglent(chan)
+            return self._MedirVrms_Siglent(chan)
         else:
-            return self.MedirVrms_Keysight(chan)
+            return self._MedirVrms_Keysight(chan)
 
     def MedirPotenciaCompleta(self, chanV: int, chanI: int) -> tuple:
         """
@@ -258,16 +258,16 @@ class Osciloscopio:
             Raises:
                 ValueError: Si los números de canal no son válidos.
             Returns:
-                tuple: Tupla con el valor de potencia (En W), voltaje (En V), corriente (En A) y fase (En grados) del canal especificado.
+                tuple: Tupla con el valor de potencia (En W), voltaje (En V), corriente (En A) y abs(cos(fase)) del canal especificado.
         """
         if chanV < 1 or chanV > self.numcanales or chanI < 1 or chanI > self.numcanales or chanV == chanI:
             raise ValueError("Número de canal no válido")
         
-        V = self._MedirVrms(chanV)
-        I = self._MedirVrms(chanI)/0.2 #200 mV/A
+        V = self.MedirVrms(chanV)
+        I = self.MedirVrms(chanI)/0.2 #200 mV/A
         fase = self.MedirFase(chanV, chanI)
         P = V * I * np.abs(np.cos(np.radians(fase)))
-        return P, V, I, fase
+        return P, V, I, np.abs(np.cos(np.radians(fase)))
     
     def MedirPotencia(self, chanV: int, chanI: int) -> float:
         """
@@ -284,11 +284,20 @@ class Osciloscopio:
         return tuple[0]  # Retorna solo la potencia
 
     def MedirPotenciaMedicsenCompleta(self, chanV: int = 1, chanI: int =2) -> tuple:
+        """
+        Measures Power with the standart medicsen measuremente (like Matlab)
+            Args: 
+                chanV (int): Channel conected to Voltage output.
+                chanI (int): Channel conected to Current output
+            returns:
+                arr: Power Measured(W), Vpp measured(V), Ipp measure (A), abs(cos(fase))
+
+        """
         Vpp = self.MedirVpp(chanV)
         Ipp = self.MedirVpp(chanI)/0.2 #200 mV/A
         fase = self.MedirFase(chanV, chanI)
         P = Vpp*Ipp*np.abs(np.cos(np.radians(fase)))/8
-        return [P, Vpp, Ipp, fase]
+        return [P, Vpp, Ipp, np.abs(np.cos(np.radians(fase)))]
     
     def MedirPotenciaMedicsen(self, chanV: int = 1, chanI: int =2) -> float:
         d = self.MedirPotenciaMedicsenCompleta(chanV, chanI)
