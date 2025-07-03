@@ -117,8 +117,8 @@ def stepResponse(osci: Osciloscopio, pulser: Pulser, pid: PID) -> None:
     """
     from frecResonancia import frecResonancia
 
-    fr = frecResonancia(osci, pulser)
-    #fr = 36819
+    #fr = frecResonancia(osci, pulser)
+    fr = 37849
     # Configuración del generador de pulsos
     pulser.set_amplitud(0.05)  # Amplitud inicial en V
     pulser.set_frecuencia(fr)  # Frecuencia en Hz
@@ -135,7 +135,7 @@ def stepResponse(osci: Osciloscopio, pulser: Pulser, pid: PID) -> None:
     tmarr = []
     st = False
     while t < 15: 
-        p, tm = cronometer(osci.MedirPotenciaMedicsen)(1,2)
+        p, tm = cronometer(osci.MedirPotenciaMedicsen)(1,3)
         t = time.time() - t0
 
         if t > 7 and st == False:

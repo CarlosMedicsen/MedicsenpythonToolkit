@@ -6,7 +6,7 @@ import json
 import time
 
 class Osciloscopio:
-    def __init__(self, id: str = "", numcanales:int = 0):
+    def __init__(self, id: str = "", numcanales: int = 0):
         if id == "":
             self.AutoConnect()
         else:
@@ -59,7 +59,7 @@ class Osciloscopio:
             if "keysight" in idn.lower():
                 self.modelo = "Keysight"
             if not self.modelo:
-                self.modelo = "Desconocido"
+                self.modelo = "Etranger"
                 print("Modelo de osciloscopio no reconocido.")
 
         except pyvisa.VisaIOError as e:
@@ -156,9 +156,9 @@ class Osciloscopio:
             resultado = valor_str.strip("()degree \n\r\t")
             if resultado == '****':
                 i += 1
-                time.sleep(0.06)
+                time.sleep(0.02)
             else:
-                if i >= 300:
+                if i >= 750:
                     raise RuntimeError("Error al medir la fase, verifique las conexiones.")
                 else:
                     mok = 1 #solo paro cuando la fase se mide bien.
@@ -285,7 +285,7 @@ class Osciloscopio:
 
     def MedirPotenciaMedicsenCompleta(self, chanV: int = 1, chanI: int =2) -> tuple:
         """
-        Measures Power with the standart medicsen measuremente (like Matlab)
+        Measures Power with the standart medicsen measurement (like Matlab) P = Vpp * Ipp * abs(cos(phase))/8
             Args: 
                 chanV (int): Channel conected to Voltage output.
                 chanI (int): Channel conected to Current output
@@ -300,8 +300,32 @@ class Osciloscopio:
         return [P, Vpp, Ipp, np.abs(np.cos(np.radians(fase)))]
     
     def MedirPotenciaMedicsen(self, chanV: int = 1, chanI: int =2) -> float:
+        """
+        Measures Power with the standart medicsen measurement (like Matlab) P = Vpp * Ipp * abs(cos(phase))/8
+            Args: 
+                chanV (int): Channel conected to Voltage output.
+                chanI (int): Channel conected to Current output
+            returns:
+                float: Power Measured(W)
+        """
         d = self.MedirPotenciaMedicsenCompleta(chanV, chanI)
         return d[0]
+
+    def MedirPotenciaDCAvr(self) -> tuple:
+        """
+        Measures Power with the DC Average of V*I
+            Args: 
+                chanV (int): Channel conected to Voltage output.
+                chanI (int): Channel conected to Current output
+            returns:
+                arr: Power Measured(W), Vdcavr measured(V), Idcavr measure (A))
+
+        """
+        self.conexion.write(":MEASure:SOURce MATH")
+        #self.conexion.write(":MEASure:average")
+        P = float(self.conexion.query(":MEASure:VAVerage?"))/0.2 #0.2 Fcorr Itefi
+        print(f"Potencia = {P}")
+        return P
 
     def __str__(self):
         """
