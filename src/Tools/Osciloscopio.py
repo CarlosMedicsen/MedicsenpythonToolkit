@@ -311,7 +311,22 @@ class Osciloscopio:
         d = self.MedirPotenciaMedicsenCompleta(chanV, chanI)
         return d[0]
 
-    def MedirPotenciaDCAvr(self) -> tuple:
+    def MedirPotenciaDCAvr(self) -> float:
+        """
+        Measures Power with the DC Average of V*I
+            Args: 
+                chanV (int): Channel conected to Voltage output.
+                chanI (int): Channel conected to Current output
+            returns:
+                float: Power Measured(W)
+        """
+        if self.modelo == 'Siglent':
+            raise "DcAvrg Power measurement is not jet implemented for this Osciloscope model. Please switch to the Keysigt Osciloscope"
+        else:
+            P = self._MedirPotenciaDCAvrKeysight()
+        return P
+
+    def _MedirPotenciaDCAvrKeysight(self) -> tuple:
         """
         Measures Power with the DC Average of V*I
             Args: 
@@ -319,7 +334,6 @@ class Osciloscopio:
                 chanI (int): Channel conected to Current output
             returns:
                 arr: Power Measured(W), Vdcavr measured(V), Idcavr measure (A))
-
         """
         self.conexion.write(":MEASure:SOURce MATH")
         #self.conexion.write(":MEASure:average")
